@@ -1,18 +1,15 @@
 #include "main.h"
+#include "Constants.hpp"
 
 // Chassis constructor
 ez::Drive chassis(
     // These are my drive motors, the first motor is used for sensing!
-    {-20, -2},  // Left Chassis Ports (negative port will reverse it!)
-    {3, 9},     // Right Chassis Ports
+    {Constants::bl_p, Constants::fl_p},  // Left Chassis Ports (negative port will reverse it!)
+    {Constants::br_p, Constants::fr_p},     // Right Chassis Ports
 
-    4,     // IMU Port
+    Constants::imu_port,     // IMU Port
     3.25,  // Wheel Diameter
     300);  // Wheel RPM = cartridge * (motor gear / wheel gear)
-
-// - `2.75` is the wheel diameter
-// - `1.0` is the distance from the center of the wheel to the center of the robot
-ez::tracking_wheel horiz_tracker(10, 2.75, 1.0);  // Perpendicular to the drive wheels
 
 
 /**
@@ -69,8 +66,39 @@ void initialize() {
   // Initialize chassis and auton selector
   chassis.initialize();
   ez::as::initialize();
+
+  // Initialize the claw rotation sensor and pitch PID controller
+  clawRotationSensor.reset();  // Reset the claw rotation sensor to 0
+  pitchPID.exit_condition_set(80, 50, 300, 150, 500, 500);  // Set the exit conditions for the pitch PID controller
+  
+  GROUND_POSITION = cascadeLiftDistanceSensor.get();  // Set the ground position for the cascade lift using the distance sensor
+  TARGET_POSITION = GROUND_POSITION;  // Set the target position for the cascade lift to the ground position
+  liftPID.exit_condition_set(80, 50, 300, 150, 500, 500);  // Set the exit conditions for the lift PID controller
+
   master.rumble(chassis.drive_imu_calibrated() ? "." : "---");
 }
+
+// Cascade Lift Task to run the PID controller in the background
+void cascadeLift_task() {
+  pros::delay(2000);  // Wait for 2 seconds before starting the task
+  while (true) {
+    // Compute the lift motor output based on the distance sensor reading and target position (1016 mm is the maximum distance the lift can extend)
+    set_lift(liftPID.compute(clamp(cascadeLiftDistanceSensor.get() - GROUND_POSITION, 0.0, 1016.0))); 
+    pros::delay(ez::util::DELAY_TIME);  // This is used for timer calculations!
+  }
+}
+pros::Task cascadeLiftTask(cascadeLift_task);
+
+// Banshee Claw Pitch Task to run the PID controller in the background
+void pitchClaw_task() {
+  pros::delay(2000);  // Wait for 2 seconds before starting the task
+  while (true) {
+    set_claw_pitch(pitchPID.compute(clawRotationSensor.get_angle() / 100.0)); // get_angle() returns the angle in hundredths of a degree, so we divide by 100 to get degrees
+    pros::delay(ez::util::DELAY_TIME);  // This is used for timer calculations!
+  }
+}
+pros::Task pitchClawTask(pitchClaw_task);
+
 
 /**
  * Runs while the robot is in the disabled state of Field Management System or
@@ -239,15 +267,13 @@ void opcontrol() {
     // Gives you some extras to make EZ-Template ezier
     ez_template_extras();
 
-    // chassis.opcontrol_tank();  // Tank control
+    // Drive control
     chassis.opcontrol_arcade_standard(ez::SPLIT);  // Standard split arcade
-    // chassis.opcontrol_arcade_standard(ez::SINGLE);  // Standard single arcade
-    // chassis.opcontrol_arcade_flipped(ez::SPLIT);    // Flipped split arcade
-    // chassis.opcontrol_arcade_flipped(ez::SINGLE);   // Flipped single arcade
-
-    // . . .
-    // Put more user control code here!
-    // . . .
+    
+    //Subsystem Controls
+    intake_opcontrol();
+    cascadeLift_opcontrol();
+    bansheeClaw_opcontrol();
 
     pros::delay(ez::util::DELAY_TIME);  // This is used for timer calculations!  Keep this ez::util::DELAY_TIME
   }

@@ -1,5 +1,8 @@
 #include "main.h"
 
+// Declared in main.cpp / the project setup so all auton files can use it.
+extern Drive chassis;
+
 /////
 // For installation, upgrading, documentations, and tutorials, check out our website!
 // https://ez-robotics.github.io/EZ-Template/
@@ -328,7 +331,7 @@ void measure_offsets() {
   if (chassis.odom_tracker_right != nullptr) chassis.odom_tracker_right->reset();
   if (chassis.odom_tracker_back != nullptr) chassis.odom_tracker_back->reset();
   if (chassis.odom_tracker_front != nullptr) chassis.odom_tracker_front->reset();
-  
+
   for (int i = 0; i < iterations; i++) {
     // Reset pid targets and get ready for running an auton
     chassis.pid_targets_reset();
