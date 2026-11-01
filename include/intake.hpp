@@ -5,7 +5,7 @@
 #include "api.h"
 
 inline pros::Motor intake(Constants::intakeMotor_port);
-inline ez::Piston intake_piston(Constants::intake_pneumatics_port);
+inline ez::Piston intake_piston(Constants::intake_pneumatics_port, true);
 
 void intakeMotor_toggle();
 void intakePiston_toggle();

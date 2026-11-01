@@ -52,6 +52,29 @@ void default_constants() {
 }
 
 ///
+// Basic Auton
+///
+
+void basic_auton() {
+  chassis.pid_drive_set(5_in, DRIVE_SPEED);
+  chassis.pid_wait();
+  chassis.pid_turn_set(-4_deg, TURN_SPEED);
+  chassis.pid_wait();
+  claw_score();
+  pros::delay(200);
+  chassis.pid_drive_set(-6_in, DRIVE_SPEED);
+  chassis.pid_wait();
+  pros::delay(20);
+  chassis.pid_drive_set(5_in, DRIVE_SPEED);
+  chassis.pid_wait();
+  chassis.pid_drive_set(-6_in, DRIVE_SPEED);
+  chassis.pid_wait();
+  pros::delay(20);
+  chassis.pid_drive_set(10_in, DRIVE_SPEED);
+  chassis.pid_wait();
+}
+
+///
 // Drive Example
 ///
 void drive_example() {

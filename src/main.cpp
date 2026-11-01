@@ -1,16 +1,16 @@
 #include "main.h"
+
 #include "Constants.hpp"
 
 // Chassis constructor
 ez::Drive chassis(
     // These are my drive motors, the first motor is used for sensing!
     {Constants::bl_p, Constants::fl_p},  // Left Chassis Ports (negative port will reverse it!)
-    {Constants::br_p, Constants::fr_p},     // Right Chassis Ports
+    {Constants::br_p, Constants::fr_p},  // Right Chassis Ports
 
-    Constants::imu_port,     // IMU Port
-    3.25,  // Wheel Diameter
-    300);  // Wheel RPM = cartridge * (motor gear / wheel gear)
-
+    Constants::imu_port,  // IMU Port
+    3.25,                 // Wheel Diameter
+    300);                 // Wheel RPM = cartridge * (motor gear / wheel gear)
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
@@ -47,6 +47,21 @@ void initialize() {
 
   // Autonomous Selector using LLEMU
   ez::as::auton_selector.autons_add({
+      {"Basic Autonomous Routine\n\nDrive backward and score one pin.", basic_auton},
+      {"Drive Forward\n\nDrive forward and come back", drive_example},
+      {"Turn 3 Times\n\nTurn 3 times.", turn_example},
+      {"Drive and Turn\n\nDrive forward, turn, come back", drive_and_turn},
+      {"Drive and Turn\n\nSlow down during drive", wait_until_change_speed},
+      {"Swing Turn\n\nSwing in an 'S' curve", swing_example},
+      {"Motion Chaining\n\nDrive forward, turn, and come back, but blend everything together :D", motion_chaining},
+      {"Combine all 3 movements", combining_movements},
+      {"Interference\n\nAfter driving forward, robot performs differently if interfered or not", interfered_example},
+      {"Simple Odom\n\nThis is the same as the drive example, but it uses odom instead!", odom_drive_example},
+      {"Pure Pursuit\n\nGo to (0, 30) and pass through (6, 10) on the way.  Come back to (0, 0)", odom_pure_pursuit_example},
+      {"Pure Pursuit Wait Until\n\nGo to (24, 24) but start running an intake once the robot passes (12, 24)", odom_pure_pursuit_wait_until_example},
+      {"Boomerang\n\nGo to (0, 24, 45) then come back to (0, 0, 0)", odom_boomerang_example},
+      {"Boomerang Pure Pursuit\n\nGo to (0, 24, 45) on the way to (24, 24) then come back to (0, 0, 0)", odom_boomerang_injected_pure_pursuit_example},
+      {"Measure Offsets\n\nThis will turn the robot a bunch of times and calculate your offsets for your tracking wheels.", measure_offsets},
       {"Drive\n\nDrive forward and come back", drive_example},
       {"Turn\n\nTurn 3 times.", turn_example},
       {"Drive and Turn\n\nDrive forward, turn, come back", drive_and_turn},
@@ -67,38 +82,29 @@ void initialize() {
   chassis.initialize();
   ez::as::initialize();
 
-  // Initialize the claw rotation sensor and pitch PID controller
-  clawRotationSensor.reset();  // Reset the claw rotation sensor to 0
-  pitchPID.exit_condition_set(80, 50, 300, 150, 500, 500);  // Set the exit conditions for the pitch PID controller
-  
-  GROUND_POSITION = cascadeLiftDistanceSensor.get();  // Set the ground position for the cascade lift using the distance sensor
-  TARGET_POSITION = GROUND_POSITION;  // Set the target position for the cascade lift to the ground position
-  liftPID.exit_condition_set(80, 50, 300, 150, 500, 500);  // Set the exit conditions for the lift PID controller
+  // Start with the claw physically down so its sensor position is 0 degrees.
+  clawRotationSensor.reset_position();
+  pitchMotor.set_brake_mode(pros::v5::MotorBrake::hold);
+  pitchPositionPID.variables_reset();
+  claw_position_control_enabled = true;
 
-  master.rumble(chassis.drive_imu_calibrated() ? "." : "---");
+  // Calibrate the lift zero while the lift is physically at ground.
+  const bool lift_initialized = cascadeLift_initialize();
+
+  master.rumble(chassis.drive_imu_calibrated() && lift_initialized ? "." : "---");
 }
 
 // Cascade Lift Task to run the PID controller in the background
 void cascadeLift_task() {
   pros::delay(2000);  // Wait for 2 seconds before starting the task
   while (true) {
-    // Compute the lift motor output based on the distance sensor reading and target position (1016 mm is the maximum distance the lift can extend)
-    set_lift(liftPID.compute(clamp(cascadeLiftDistanceSensor.get() - GROUND_POSITION, 0.0, 1016.0))); 
+    cascadeLift_opcontrol();
     pros::delay(ez::util::DELAY_TIME);  // This is used for timer calculations!
   }
 }
 pros::Task cascadeLiftTask(cascadeLift_task);
 
 // Banshee Claw Pitch Task to run the PID controller in the background
-void pitchClaw_task() {
-  pros::delay(2000);  // Wait for 2 seconds before starting the task
-  while (true) {
-    set_claw_pitch(pitchPID.compute(clawRotationSensor.get_angle() / 100.0)); // get_angle() returns the angle in hundredths of a degree, so we divide by 100 to get degrees
-    pros::delay(ez::util::DELAY_TIME);  // This is used for timer calculations!
-  }
-}
-pros::Task pitchClawTask(pitchClaw_task);
-
 
 /**
  * Runs while the robot is in the disabled state of Field Management System or
@@ -269,10 +275,9 @@ void opcontrol() {
 
     // Drive control
     chassis.opcontrol_arcade_standard(ez::SPLIT);  // Standard split arcade
-    
-    //Subsystem Controls
+
+    // Subsystem Controls
     intake_opcontrol();
-    cascadeLift_opcontrol();
     bansheeClaw_opcontrol();
 
     pros::delay(ez::util::DELAY_TIME);  // This is used for timer calculations!  Keep this ez::util::DELAY_TIME

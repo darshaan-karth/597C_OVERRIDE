@@ -31,11 +31,11 @@ void intakePiston_toggle() {
 
 // Intake Opcontrol Function
 void intake_opcontrol() {
-  if (master.get_digital_new_press(DIGITAL_L1)) {
+  if (master.get_digital_new_press(DIGITAL_B)) {
     intakeMotor_toggle();
   }
 
-  if (master.get_digital_new_press(DIGITAL_L2)) {
+  if (master.get_digital_new_press(DIGITAL_A)) {
     intakePiston_toggle();
   }
 }
