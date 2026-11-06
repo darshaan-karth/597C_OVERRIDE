@@ -74,6 +74,13 @@ void basic_auton() {
   chassis.pid_wait();
 }
 
+void skills_auton(){
+  claw_standby();
+  chassis.pid_drive_set(-72_in, DRIVE_SPEED, true);
+  chassis.pid_wait();
+  claw_score();
+}
+
 ///
 // Drive Example
 ///

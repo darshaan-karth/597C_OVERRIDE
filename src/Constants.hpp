@@ -19,26 +19,20 @@ constexpr int8_t br_p = 5;  // Back Right
 // Sensor Port
 constexpr int8_t imu_port = 8;
 constexpr int8_t distance_port = 19;
-constexpr int8_t clawRotation_port = 9;
 
-// Intake Pneumatic Mechanism Port
-constexpr unsigned char intake_pneumatics_port = 'E';  // Port for the Pneumatic intake
-
-// Intake Motor Port
+// Intake Ports
+constexpr unsigned char intake_pneumatics_port = 'A';  // Port for the Pneumatic intake
 constexpr int8_t intakeMotor_port = -20;
 
-// Banshee Claw Motor Ports
-constexpr int8_t pitchMotor_port = -1;
+// Banshee Claw Ports
 constexpr int8_t clampingMotor_port = 2;
+constexpr unsigned char claw_pneumatics_port = 'B';  // Port for the Pneumatic claw
+constexpr int8_t toggleMotor_port = -1;
 
-// Casacade Lift Motor Ports
+// Casacade Lift Motor Ports & Constants
 constexpr int8_t cascadeLiftMotor_port = 11;
 constexpr int8_t cascadeLiftMotor2_port = -12;
-constexpr bool liftDistanceIncreasesAsLiftRises = true;
-constexpr double liftMaximumHeight_mm = 1016.0;
-constexpr double liftMaximumVelocity_rpm = 200.0;
-constexpr double liftMinimumVelocity_rpm = 20.0;
-constexpr double liftPositionTolerance_mm = 8.0;
+constexpr double liftInterval_in = 3.0;
 
 // ======================
 // == Drive Control    ==

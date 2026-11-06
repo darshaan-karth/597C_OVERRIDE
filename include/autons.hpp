@@ -3,6 +3,7 @@
 void default_constants();
 
 void basic_auton();
+void skills_auton();
 
 void drive_example();
 void turn_example();

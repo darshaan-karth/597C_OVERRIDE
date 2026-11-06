@@ -48,6 +48,7 @@ void initialize() {
   // Autonomous Selector using LLEMU
   ez::as::auton_selector.autons_add({
       {"Basic Autonomous Routine\n\nDrive backward and score one pin.", basic_auton},
+      {"Skills Autonomous Routine\n\nDrive backward and score one pin & park.", skills_auton},
       {"Drive Forward\n\nDrive forward and come back", drive_example},
       {"Turn 3 Times\n\nTurn 3 times.", turn_example},
       {"Drive and Turn\n\nDrive forward, turn, come back", drive_and_turn},
@@ -82,27 +83,34 @@ void initialize() {
   chassis.initialize();
   ez::as::initialize();
 
-  // Start with the claw physically down so its sensor position is 0 degrees.
-  clawRotationSensor.reset_position();
-  pitchMotor.set_brake_mode(pros::v5::MotorBrake::hold);
-  pitchPositionPID.variables_reset();
-  claw_position_control_enabled = true;
+  liftPID.exit_condition_set(80, 50, 300, 150, 500, 500);
 
-  // Calibrate the lift zero while the lift is physically at ground.
-  const bool lift_initialized = cascadeLift_initialize();
-
-  master.rumble(chassis.drive_imu_calibrated() && lift_initialized ? "." : "---");
+  master.rumble(chassis.drive_imu_calibrated() ? "." : "---");
 }
 
-// Cascade Lift Task to run the PID controller in the background
-void cascadeLift_task() {
-  pros::delay(2000);  // Wait for 2 seconds before starting the task
-  while (true) {
-    cascadeLift_opcontrol();
-    pros::delay(ez::util::DELAY_TIME);  // This is used for timer calculations!
-  }
+void lift_task() {
+    pros::delay(2000);
+
+    while (true) {
+        if (lift_mode == LiftMode::PID) {
+            double height = getLiftHeight();
+
+            // Stop if the distance sensor gives an invalid reading.
+            if (height >= 0.0 && height <= 45.0) {
+                int output = liftPID.compute(height);
+                output = std::clamp(output, -127, 127);
+                set_lift(output);
+            }
+            else {
+                set_lift(0);
+            }
+        }
+
+        pros::delay(ez::util::DELAY_TIME);
+    }
 }
-pros::Task cascadeLiftTask(cascadeLift_task);
+
+pros::Task Lift_Task(lift_task);
 
 // Banshee Claw Pitch Task to run the PID controller in the background
 
@@ -140,6 +148,8 @@ void competition_initialize() {
  * from where it left off.
  */
 void autonomous() {
+  lift_mode = LiftMode::PID;  // Set lift mode to PID for autonomous
+
   chassis.pid_targets_reset();                // Resets PID targets to 0
   chassis.drive_imu_reset();                  // Reset gyro position to 0
   chassis.drive_sensor_reset();               // Reset drive sensors to 0
@@ -235,7 +245,7 @@ void ez_template_extras() {
       chassis.pid_tuner_toggle();
 
     // Trigger the selected autonomous routine
-    if (master.get_digital(DIGITAL_B) && master.get_digital(DIGITAL_DOWN)) {
+    if (master.get_digital(DIGITAL_B) && master.get_digital(DIGITAL_Y)) {
       pros::motor_brake_mode_e_t preference = chassis.drive_brake_get();
       autonomous();
       chassis.drive_brake_set(preference);
@@ -268,6 +278,7 @@ void ez_template_extras() {
 void opcontrol() {
   // This is preference to what you like to drive on
   chassis.drive_brake_set(MOTOR_BRAKE_COAST);
+  lift_mode = LiftMode::MANUAL;  // Set lift mode to manual for opcontrol
 
   while (true) {
     // Gives you some extras to make EZ-Template ezier
@@ -279,6 +290,7 @@ void opcontrol() {
     // Subsystem Controls
     intake_opcontrol();
     bansheeClaw_opcontrol();
+    cascadeLift_opcontrol();
 
     pros::delay(ez::util::DELAY_TIME);  // This is used for timer calculations!  Keep this ez::util::DELAY_TIME
   }
