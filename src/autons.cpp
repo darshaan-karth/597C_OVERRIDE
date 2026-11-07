@@ -56,27 +56,18 @@ void default_constants() {
 ///
 
 void basic_auton() {
-  chassis.pid_drive_set(5_in, DRIVE_SPEED);
-  chassis.pid_wait();
-  chassis.pid_turn_set(-4_deg, TURN_SPEED);
-  chassis.pid_wait();
-  claw_score();
+  toggle_mech();
   pros::delay(200);
   chassis.pid_drive_set(-6_in, DRIVE_SPEED);
   chassis.pid_wait();
-  pros::delay(20);
-  chassis.pid_drive_set(5_in, DRIVE_SPEED);
-  chassis.pid_wait();
-  chassis.pid_drive_set(-6_in, DRIVE_SPEED);
-  chassis.pid_wait();
-  pros::delay(20);
+  pros::delay(1000);
   chassis.pid_drive_set(10_in, DRIVE_SPEED);
   chassis.pid_wait();
 }
 
-void skills_auton(){
+void skills_auton() {
   claw_standby();
-  chassis.pid_drive_set(-72_in, DRIVE_SPEED, true);
+  chassis.pid_drive_set(-72_in, DRIVE_SPEED);
   chassis.pid_wait();
   claw_score();
 }

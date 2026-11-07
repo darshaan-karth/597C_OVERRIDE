@@ -10,7 +10,6 @@
 
 inline ez::Piston claw_piston(Constants::claw_pneumatics_port);
 inline pros::Motor clampingMotor(Constants::clampingMotor_port);
-inline pros::Motor toggleMechMotor(Constants::toggleMotor_port);
 
 inline bool claw_on_standby = false;  // Flag to indicate if the claw is in standby mode
 

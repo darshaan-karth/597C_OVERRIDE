@@ -1,40 +1,22 @@
 #include "main.h"
 
 double getLiftHeight() {
-    return cascadeLiftDistanceSensor.get() / 25.4;
+  return cascadeLiftDistanceSensor.get() / 25.4;
 }
 
 void liftMoveTo(double height) {
-    height = std::clamp(height, 0.0, 39.0);
-    liftPID.target_set(height);
-    lift_mode = LiftMode::PID;
+  height = std::clamp(height, 0.0, 39.0);
+  liftPID.target_set(height);
+  lift_mode = LiftMode::PID;
 }
 
 void cascadeLift_up() {
-  /*static bool cascade_on = false;
-
-  if (cascade_on) {
-    cascadeLift.move(0);
-    cascade_on = false;
-  } else {
-    cascadeLift.move(127);
-    cascade_on = true;
-  }*/
   TARGET_POSITION = std::clamp(TARGET_POSITION + Constants::liftInterval_in, 0.0, 39.0);
   liftPID.target_set(TARGET_POSITION);
   lift_mode = LiftMode::PID;
 }
 
 void cascadeLift_down() {
-  /*static bool cascade_on = false;
-
-  if (cascade_on) {
-    cascadeLift.move(0);
-    cascade_on = false;
-  } else {
-    cascadeLift.move(-127);
-    cascade_on = true;
-  }*/
   TARGET_POSITION = std::clamp(TARGET_POSITION - Constants::liftInterval_in, 0.0, 39.0);
   liftPID.target_set(TARGET_POSITION);
   lift_mode = LiftMode::PID;
@@ -44,6 +26,7 @@ void cascadeLift_ground() {
   TARGET_POSITION = 0.0;
   liftPID.target_set(TARGET_POSITION);
   lift_mode = LiftMode::PID;
+  lift_wait();
 }
 
 void cascadeLift_opcontrol() {

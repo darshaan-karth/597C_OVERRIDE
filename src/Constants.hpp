@@ -17,7 +17,7 @@ constexpr int8_t fr_p = 14;  // Front Right
 constexpr int8_t br_p = 5;  // Back Right
 
 // Sensor Port
-constexpr int8_t imu_port = 8;
+constexpr int8_t imu_port = 7;
 constexpr int8_t distance_port = 19;
 
 // Intake Ports
@@ -27,7 +27,10 @@ constexpr int8_t intakeMotor_port = -20;
 // Banshee Claw Ports
 constexpr int8_t clampingMotor_port = 2;
 constexpr unsigned char claw_pneumatics_port = 'B';  // Port for the Pneumatic claw
+
+//Toggle Mech Ports
 constexpr int8_t toggleMotor_port = -1;
+constexpr int8_t opticalSensor_port = 20;
 
 // Casacade Lift Motor Ports & Constants
 constexpr int8_t cascadeLiftMotor_port = 11;

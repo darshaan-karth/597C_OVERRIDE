@@ -33,23 +33,7 @@ void claw_stop() {
   clampingMotor.move(0);
 }
 
-void toggle_mech() {
-  static bool toggle_mech_state = false;
-
-  if (toggle_mech_state) {
-    toggle_mech_state = false;
-  } else {
-    toggle_mech_state = true;
-  }
-
-  toggleMechMotor.move(toggle_mech_state ? -127 : 0);
-}
-
 void bansheeClaw_opcontrol() {
-  if (master.get_digital_new_press(DIGITAL_DOWN)) {
-    toggle_mech();
-  }
-
   if (master.get_digital_new_press(DIGITAL_A)) {
     claw_standby();
   }

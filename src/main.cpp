@@ -89,28 +89,50 @@ void initialize() {
 }
 
 void lift_task() {
-    pros::delay(2000);
+  pros::delay(2000);
 
-    while (true) {
-        if (lift_mode == LiftMode::PID) {
-            double height = getLiftHeight();
+  while (true) {
+    if (lift_mode == LiftMode::PID) {
+        double height = getLiftHeight();
 
-            // Stop if the distance sensor gives an invalid reading.
-            if (height >= 0.0 && height <= 45.0) {
-                int output = liftPID.compute(height);
-                output = std::clamp(output, -127, 127);
-                set_lift(output);
-            }
-            else {
-                set_lift(0);
-            }
+        // Stop if the distance sensor gives an invalid reading.
+        if (height >= 0.0 && height <= 45.0) {
+            int output = liftPID.compute(height);
+            output = std::clamp(output, -127, 127);
+            set_lift(output);
         }
-
-        pros::delay(ez::util::DELAY_TIME);
+        else {
+            set_lift(0);
+        }
     }
+
+    pros::delay(ez::util::DELAY_TIME);
+  }
 }
 
 pros::Task Lift_Task(lift_task);
+
+
+void optical_task() {
+  pros::delay(2000);
+
+  while (true) {
+    if (toggle_mech_state) {
+      if(!isToggleColorMatching()){
+          toggleMechMotor.move(-127);
+      } else {
+        toggleMechMotor.move(0);
+        toggle_mech_state = false;
+      }
+    } else {
+      toggleMechMotor.move(0);
+    }
+
+    pros::delay(ez::util::DELAY_TIME);
+  }
+}
+
+pros::Task Optical_Task(optical_task);
 
 // Banshee Claw Pitch Task to run the PID controller in the background
 
@@ -291,6 +313,7 @@ void opcontrol() {
     intake_opcontrol();
     bansheeClaw_opcontrol();
     cascadeLift_opcontrol();
+    toggleMech_opcontrol();
 
     pros::delay(ez::util::DELAY_TIME);  // This is used for timer calculations!  Keep this ez::util::DELAY_TIME
   }
